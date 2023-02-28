@@ -1,0 +1,433 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:a="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich" template="layout/template.xhtml">
+
+    <ui:define name="body">
+        <script
+                src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css" />
+        <link rel="stylesheet"
+              href="//cdn.materialdesignicons.com/1.9.32/css/materialdesignicons.min.css" />
+
+
+        <a:loadStyle src="/css/core.css" />
+        <a:loadStyle src="/css/components.css" />
+        <a:loadStyle src="/js/plugins/fullcalendar/dist/fullcalendar.min.css" />
+
+        <a:loadStyle src="/css/AdminLTE.min.css" />
+        <a:loadScript src="/js/moment-with-locales.min.js" />
+        <a:loadScript src="/js/plugins/morris/morris.min.js" />
+        <a:loadScript src="/js/highcharts.js" />
+        <a:loadScript src="/js/exporting.js" />
+        <style type="text/css">
+            .alert-danger {
+                background-color: #f9a9af !important;
+            }
+
+            /* .navigation .main-nav>li {
+                font-size: 14px !important;
+            } */
+
+            /* .text-warning {
+                color: #999 !important;
+            } */
+            /*
+            .highcharts-container {
+                width: 100% !important;
+            }
+             */
+            .theme-teal a>.fc-content {
+                color: white !important;
+            }
+
+            .navigation .dropdown-menu>li>a:hover {
+                background: #368ee0 !important;
+            }
+
+            .body {
+
+            }
+
+            .highcharts-credits {
+                display: none;
+            }
+
+            .text-danger {
+                color: #f5707a !important;
+            }
+
+            .text-success {
+                color: #444 !important;
+            }
+
+            .content-wrapper, .right-side, .main-footer {
+                margin-left: 0px !important;
+            }
+
+            .progress {
+                background-color: #f5f5f5;
+            }
+
+            .lg {
+                height: 30px !important;
+            }
+
+            .fc-content {
+                color: #fff;
+                text-align: left;
+            }
+
+            .fc-left .fc-button-group {
+                margin-top: 2px;
+            }
+        </style>
+
+        <h:form id="chartForm">
+            <s:div styleClass="content-wrapper">
+                <section class="content-header">
+                    <h1>#{msgProject.task_calendar}</h1>
+                </section>
+                <s:div styleClass="content">
+                    <s:div styleClass="row" id="boxCalendar"
+                           style="padding-right: 20px;">
+                        <s:div styleClass="box" style="margin-left:10px">
+                            <s:div styleClass="col-sm-12" style="margin-top:21px;">
+                                <s:div styleClass="col-sm-2">
+                                    <s:div styleClass="form-group">
+                                        <h:selectOneListbox id="groupId"
+                                                            value="#{chartJsHome.groupId}" styleClass="form-control"
+                                                            size="1">
+                                            <f:selectItem itemValue="-1"
+                                                          itemLabel="-- #{msgHome.deparment} --" />
+                                            <f:selectItems value="#{chartJsHome.selectItemUserGroup}" />
+                                            <a:support event="onchange" ajaxSingle="true"
+                                                       action="#{chartJsHome.findUserSubset}"
+                                                       reRender="selectUser, boxCalendar, calendar"
+                                                       oncomplete="init_calendar();" />
+                                        </h:selectOneListbox>
+                                    </s:div>
+                                </s:div>
+                                <s:div styleClass="col-sm-2" style="margin-left:5px;"
+                                       id="selectUser">
+                                    <h:selectOneListbox value="#{chartJsHome.selectUserId}"
+                                                        size="1" styleClass="form-control">
+                                        <f:selectItem itemValue="-1"
+                                                      itemLabel="-- #{msgHome.personnel} --" />
+                                        <f:selectItems value="#{chartJsHome.selectUser}" />
+                                        <a:support event="onchange" ajaxSingle="true"
+                                                   reRender="boxCalendar, calendar"
+                                                   oncomplete="init_calendar();" />
+                                    </h:selectOneListbox>
+                                </s:div>
+                                <s:div styleClass="col-sm-2" style="margin-left:5px;">
+                                    <h:selectOneListbox id="transactionAndTask"
+                                                        value="#{chartJsHome.selectCalendar}" size="1"
+                                                        styleClass="form-control">
+                                        <f:selectItem itemLabel="#{msgHome.transaction}" itemValue="1" />
+                                        <f:selectItem itemLabel="#{msgHome.task}" itemValue="2" />
+                                        <a:support event="onchange" ajaxSingle="true"
+                                                   action="#{chartJsHome.findUserSubset}"
+                                                   reRender="boxCalendar, calendar"
+                                                   oncomplete="init_calendar();" />
+                                    </h:selectOneListbox>
+                                </s:div>
+                            </s:div>
+                            <s:div style="padding: 50px 10px; font-size: 13px; !important;">
+                                <div id="divCalendar">
+                                    <div id='calendar'></div>
+                                </div>
+                            </s:div>
+                        </s:div>
+                        <div id="CalenderModalNew" class="modal fade" tabindex="-1"
+                             role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"
+                                                aria-hidden="true">×</button>
+                                        <h4 class="modal-title" id="myModalLabel">#{msgHome.new_calendar}</h4>
+                                    </div>
+                                    <div style="background: black;" class="modal-body">
+                                        <div style="padding: 5px 20px; background: black;"
+                                             id="testmodal">
+                                            <div style="background: black;" id="antoform"
+                                                 class="form-horizontal calender" role="form">
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label">#{msgHome.description}</label>
+                                                    <div class="col-sm-9">
+														<textarea class="form-control" style="height: 55px;"
+                                                                  id="descr" name="descr"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default antoclose"
+                                                data-dismiss="modal">#{msgHome.close}</button>
+                                        <button type="button" class="btn btn-primary antosubmit">#{msgHome.save_changes}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="CalenderModalEdit" class="modal fade" tabindex="-1"
+                             role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"
+                                                aria-hidden="true">×</button>
+                                        <h4 class="modal-title" id="myModalLabel2">#{msgHome.event_detail_calendar}</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="testmodal2" style="padding: 5px 20px;">
+                                            <div id="antoform2" class="form-horizontal calender"
+                                                 role="form">
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label"> <h:outputText
+                                                            rendered="#{chartJsHome.selectCalendar  == 1 or chartJsHome.selectCalendar == 0}"
+                                                            value="#{msgHome.transaction}" /> <h:outputText
+                                                            rendered="#{chartJsHome.selectCalendar == 2}"
+                                                            value="#{msgHome.task}" />
+                                                    </label>
+                                                    <div class="col-sm-9">
+                                                        <input type="text" class="form-control" id="title2"
+                                                               name="title2" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label"> <h:outputText
+                                                            value="#{msgProject.start_date}" />
+                                                    </label>
+                                                    <div class="col-sm-9">
+                                                        <input type="text" class="form-control" id="start"
+                                                               name="start" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label"> <h:outputText
+                                                            value="#{msgProject.end_date_calendar}" />
+                                                    </label>
+                                                    <div class="col-sm-9">
+                                                        <input type="text" class="form-control" id="end"
+                                                               name="end" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label"> <h:outputText
+                                                            value="#{msgProject.customer_name}" />
+                                                    </label>
+                                                    <div class="col-sm-9">
+                                                        <input type="text" class="form-control" id="customer_name"
+                                                               name="customer_name" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label"> <h:outputText
+                                                            value="#{msgProject.assigned_user}" />
+                                                    </label>
+                                                    <div class="col-sm-9">
+                                                        <input type="text" class="form-control" id="assigned"
+                                                               name="assigned" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label">#{msgHome.description}</label>
+                                                    <div class="col-sm-9">
+                                                        <h:outputText id="descr2" value="" escape="false" />
+                                                        <textarea class="form-control" style="height: 55px;"
+                                                                  id="descr2" name="descr"></textarea>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default antoclose2"
+                                                data-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="fc_create" data-toggle="modal"
+                             data-target="#CalenderModalNew"></div>
+                        <div id="fc_edit" data-toggle="modal"
+                             data-target="#CalenderModalEdit"></div>
+                    </s:div>
+                </s:div>
+            </s:div>
+
+            <a:jsFunction name="loadEvent"
+                          data="#{chartJsHome.fetchDataForCalendar()}"
+                          oncomplete="setEvents(data);">
+                <a:actionparam name="start" assignTo="#{chartJsHome.startDate}" />
+                <a:actionparam name="end" assignTo="#{chartJsHome.endDate}" />
+            </a:jsFunction>
+
+        </h:form>
+
+        <!-- 		<a:loadScript src="/js/jquery-2.2.0.min.js" /> -->
+        <a:loadScript src="/js/plugins/fullcalendar/dist/fullcalendar.min.js" />
+
+        <script>
+            //<![CDATA[
+            var jQuerX = jQuery.noConflict();
+
+            var events = [];
+            var isLoad = false;
+
+            function  init_calendar() {
+                if( typeof (jQuerX.fn.fullCalendar) === 'undefined'){ return; }
+
+                var date = new Date(),
+                    d = date.getDate(),
+                    m = date.getMonth(),
+                    y = date.getFullYear(),
+                    started,
+                    categoryClass;
+
+                var calendar = jQuerX('#calendar').fullCalendar({
+                    header: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'month,agendaWeek,agendaDay,listMonth'
+                    },
+
+                    selectable: true,
+
+                    select: function(start, end, allDay) {
+                        jQuerX('#fc_create').click();
+                        console.log("test");
+
+                        started = start;
+                        ended = end;
+
+                        jQuerX(".antosubmit").on("click", function() {
+                            var title = jQuerX("#title").val();
+                            if (end) {
+                                ended = end;
+                            }
+
+                            categoryClass = jQuerX("#event_type").val();
+
+                            if (title) {
+                                calendar.fullCalendar('renderEvent', {
+                                        title: title,
+                                        start: started,
+                                        end: end,
+                                        allDay: allDay
+                                    },
+                                    true // make the event "stick"
+                                );
+                            }
+
+                            jQuerX('#title').val('');
+
+                            calendar.fullCalendar('unselect');
+
+                            jQuerX('.antoclose').click();
+
+                            return false;
+                        });
+                    },
+
+                    eventClick: function(calEvent, jsEvent, view) {
+                        jQuerX('#fc_edit').click();
+
+                        jQuerX('#title2').val(calEvent.name);
+                        jQuerX('#assigned').val(calEvent.assigned);
+                        jQuerX('#start').val(formatDate(calEvent.start));
+                        jQuerX('#end').val(formatDate(calEvent.end));
+                        jQuerX('#customer_name').val(calEvent.customer);
+                        jQuerX('#descr2').val(calEvent.note);
+                        categoryClass = jQuerX("#event_type").val();
+
+                        jQuerX(".antosubmit2").on("click", function() {
+                            calEvent.title = jQuerX("#title2").val();
+
+                            calendar.fullCalendar('updateEvent', calEvent);
+                            jQuerX('.antoclose2').click();
+                        });
+
+                        calendar.fullCalendar('unselect');
+                    },
+                    editable: true,
+                    events: function(start, end, timezone, callback) {
+                        var startDate = start.year() + "-" + (start.month() < 10 ? "0" + start.month() : start.month());
+                        var endDate = end.year() + "-" + (end.month() < 10 ? "0" + end.month() :  end.month());
+                        loadEvent(startDate, endDate);
+
+                        var interval = setInterval(function(){
+                            if(isLoad == true){
+                                callback(events);
+                                isLoad = false;
+                                clearInterval(interval);
+                            }
+                        }, 100);
+                    }
+                });
+
+            };
+
+            function setEvents(data){
+                events = [];
+                if(data != ""){
+                    var list = data != "" ? JSON.parse(data) : "";
+                    events = list;
+                }
+                isLoad = true;
+            }
+
+            function reloadDIV()
+            {
+                jQuerX( "#calendar" ).load(window.location.href + " #calendar" );
+                init_calendar();
+            }
+
+
+            function reloadPage(){
+                location.reload();
+            }
+
+            function formatDate(date) {
+                if(date) {
+                    return formatDateNumber(date.day()) + "/"
+                        + formatDateNumber(date.month() + 1) + "/"
+                        + date.year() + " "
+                        + formatDateNumber(date.hour()) + ":"
+                        + formatDateNumber(date.minute()) + ":"
+                        + formatDateNumber(date.second());
+                }
+                return "";
+            }
+
+            function formatDateNumber(number) {
+                if(number < 9)
+                    return "0" + number;
+                return number + "";
+            }
+
+            jQuerX(document).ready(function() {
+                init_calendar();
+            });
+
+            //]]>
+        </script>
+    </ui:define>
+
+</ui:composition>
